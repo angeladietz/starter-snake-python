@@ -18,7 +18,7 @@ class Battlesnake(object):
         return {
             "apiversion": "1",
             "author": "",  # TODO: Your Battlesnake Username
-            "color": "#888888",  # TODO: Personalize
+            "color": "#B765CD",  # TODO: Personalize
             "head": "default",  # TODO: Personalize
             "tail": "default",  # TODO: Personalize
         }
@@ -127,29 +127,81 @@ class Battlesnake(object):
         # Valid moves are "up", "down", "left", or "right".
         # TODO: Use the information in cherrypy.request.json to decide your next move.
         data = cherrypy.request.json
-
+        print("data is:****************", data)
+        print("data is:****************")
         # Choose a random direction to move in
         possible_moves = ["up", "down", "left", "right"]
+        random.shuffle(possible_moves)
 
-        # print("head:")
-        # print(data['you']['head'])
-        # print(data)
-
-        move = random.choice(possible_moves)
-        print("Random choice: ", move)
+        move = -1
+        moves_data = {
+        }  # stores data for all 4 directions with their values for will_hit_another_snake and will_go_out_of_bounds
+        total_safe_moves = 0
         for possible_move in possible_moves:
-            # print(possible_move)
             will_hit_another_snake = self.willHitAnotherSnake(
                 data, possible_move)
             will_go_out_of_bounds = self.willGoOutOfBounds(data, possible_move)
+            moves_data[possible_move] = {
+                'will_hit_another_snake': will_hit_another_snake,
+                'will_go_out_of_bounds': will_go_out_of_bounds,
+            }
             if not will_hit_another_snake and not will_go_out_of_bounds:
-                move = possible_move
-                break
+                total_safe_moves += 1
 
-        # move = random.choice(possible_moves)
+        # print("moves data: ", moves_data)
+        # print("total_safe_moves: ", total_safe_moves)
+
+        safe_move_number = 1
+        while move == -1 and safe_move_number <= total_safe_moves:
+            move = self.getSafeMoveNumberXFromList(moves_data,
+                                                   safe_move_number)
+            print("from list got the move as : ", move)
+            # if move != -1 and self.isCollisionPossibleInNxtStep(data, move):
+            #     move = -1
+            #     print("move decided does not look safe for next step")
+            
+            safe_move_number += 1
+
+        if move == -1:
+            move = random.choice(possible_moves)
 
         print(f"MOVE: {move}")
         return {"move": move}
+
+    def getSafeMoveNumberXFromList(self, moves_data, safe_move_number):
+        # print("counter received as : ", safe_move_number)
+        move = -1
+        i = 0
+        for key in moves_data:
+            will_hit_another_snake = moves_data[key]['will_hit_another_snake']
+            will_go_out_of_bounds = moves_data[key]['will_go_out_of_bounds']
+            if not will_hit_another_snake and not will_go_out_of_bounds:
+                i += 1
+                if safe_move_number == i:
+                    move = key
+                    break
+        return move
+
+    def isCollisionPossibleInNxtStep(self, data, decided_move):
+        head = data['you']['head']
+        head_at_next_step = {'x': head['x'], 'y': head['y']}
+        if decided_move == "up":
+            head_at_next_step['y'] += 1
+        if decided_move == "down":
+            head_at_next_step['y'] -= 1
+        if decided_move == "right":
+            head_at_next_step['x'] += 1
+        if decided_move == "left":
+            head_at_next_step['x'] -= 1
+        temp_data = data
+        temp_data['you']['head'] = head_at_next_step
+        possible_moves = ["up", "down", "left", "right"]
+        collision_possible = False
+        for p_m in possible_moves:
+            if self.willHitAnotherSnake(temp_data, p_m):
+                collision_possible = True
+                break
+        return collision_possible
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
