@@ -2,7 +2,6 @@ import os
 import random
 
 import cherrypy
-
 """
 This is a simple Battlesnake server written in Python.
 For instructions see https://github.com/BattlesnakeOfficial/starter-snake-python/README.md
@@ -35,47 +34,90 @@ class Battlesnake(object):
         return "ok"
 
     def willCollideWithSelf(self, data, direction):
-      head = data['you']['head']
+        head = data['you']['head']
 
-      if direction == "up" and {'x':head['x'], 'y':head['y']+1} in data['you']['body']:
-        return True
-      elif direction == "down" and {'x':head['x'], 'y':head['y']-1} in data['you']['body']:
-        return True
-      elif direction == "right" and {'x':head['x']+1, 'y':head['y']} in data['you']['body']:
-        return True
-      elif direction == "left" and {'x':head['x']-1, 'y':head['y']} in data['you']['body']:
-        return True
+        if direction == "up" and {
+                'x': head['x'],
+                'y': head['y'] + 1
+        } in data['you']['body']:
+            return True
+        elif direction == "down" and {
+                'x': head['x'],
+                'y': head['y'] - 1
+        } in data['you']['body']:
+            return True
+        elif direction == "right" and {
+                'x': head['x'] + 1,
+                'y': head['y']
+        } in data['you']['body']:
+            return True
+        elif direction == "left" and {
+                'x': head['x'] - 1,
+                'y': head['y']
+        } in data['you']['body']:
+            return True
 
-      return False
+        return False
 
     def willGoOutOfBounds(self, data, direction):
-      head = data['you']['head']
+        head = data['you']['head']
 
-      if direction == "up" and head['y'] == data['board']['height']-1:
-        return True
-      elif direction == "down" and head['y'] == 0:
-        return True
-      elif direction == "right" and head['x'] == data['board']['width']-1:
-        return True
-      elif direction == "left" and head['x'] == 0:
-        return True
-      
-      return False
+        if direction == "up" and head['y'] == data['board']['height'] - 1:
+            return True
+        elif direction == "down" and head['y'] == 0:
+            return True
+        elif direction == "right" and head['x'] == data['board']['width'] - 1:
+            return True
+        elif direction == "left" and head['x'] == 0:
+            return True
+
+        return False
 
     def willHitAnotherSnake(self, data, direction):
-      head = data['you']['head']
-
-      for snake in data['board']['snakes']:
-        if direction == "up" and {'x':head['x'], 'y':head['y']+1} in snake['body']:
-          return True
-        elif direction == "down" and {'x':head['x'], 'y':head['y']-1} in snake['body']:
-          return True
-        elif direction == "right" and {'x':head['x']+1, 'y':head['y']} in snake['body']:
-          return True
-        elif direction == "left" and {'x':head['x']-1, 'y':head['y']} in snake['body']:
-          return True
-
-      return False
+        head = data['you']['head']
+        your_health = data['you']['health']
+        for snake in data['board']['snakes']:
+            opponent_body = snake['body']
+            opponent_head = snake['body'][0]
+            opponent_health = snake['health']
+            if direction == "up" and {
+                    'x': head['x'],
+                    'y': head['y'] + 1
+            } in opponent_body:
+                if head['x'] == opponent_head[
+                        'x'] and head['y'] + 1 == opponent_head[
+                            'y'] and your_health > opponent_health:
+                    #there's a h2h collision and an opportunity to eliminate opponent
+                    return False
+                return True
+            elif direction == "down" and {
+                    'x': head['x'],
+                    'y': head['y'] - 1
+            } in opponent_body:
+                if head['x'] == opponent_head[
+                        'x'] and head['y'] - 1 == opponent_head[
+                            'y'] and your_health > opponent_health:
+                    return False
+                return True
+            elif direction == "right" and {
+                    'x': head['x'] + 1,
+                    'y': head['y']
+            } in opponent_body:
+                if head['x'] + 1 == opponent_head['x'] and head[
+                        'y'] == opponent_head[
+                            'y'] and your_health > opponent_health:
+                    return False
+                return True
+            elif direction == "left" and {
+                    'x': head['x'] - 1,
+                    'y': head['y']
+            } in opponent_body:
+                if head['x'] - 1 == opponent_head['x'] and head[
+                        'y'] == opponent_head[
+                            'y'] and your_health > opponent_health:
+                    return False
+                return True
+        return False
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
@@ -93,13 +135,16 @@ class Battlesnake(object):
         # print(data['you']['head'])
         # print(data)
 
-        move="up"
-
+        move = random.choice(possible_moves)
+        print("Random choice: ", move)
         for possible_move in possible_moves:
-          # print(possible_move)
-          if not self.willHitAnotherSnake(data, possible_move) and not self.willGoOutOfBounds(data, possible_move):
-            move = possible_move
-            break
+            # print(possible_move)
+            will_hit_another_snake = self.willHitAnotherSnake(
+                data, possible_move)
+            will_go_out_of_bounds = self.willGoOutOfBounds(data, possible_move)
+            if not will_hit_another_snake and not will_go_out_of_bounds:
+                move = possible_move
+                break
 
         # move = random.choice(possible_moves)
 
@@ -120,8 +165,9 @@ class Battlesnake(object):
 if __name__ == "__main__":
     server = Battlesnake()
     cherrypy.config.update({"server.socket_host": "0.0.0.0"})
-    cherrypy.config.update(
-        {"server.socket_port": int(os.environ.get("PORT", "8080")),}
-    )
+    cherrypy.config.update({
+        "server.socket_port":
+        int(os.environ.get("PORT", "8080")),
+    })
     print("Starting Battlesnake Server...")
     cherrypy.quickstart(server)
