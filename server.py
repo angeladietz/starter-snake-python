@@ -18,7 +18,7 @@ class Battlesnake(object):
         return {
             "apiversion": "1",
             "author": "",  # TODO: Your Battlesnake Username
-            "color": "#888888",  # TODO: Personalize
+            "color": "#0b03fc",  # TODO: Personalize
             "head": "default",  # TODO: Personalize
             "tail": "default",  # TODO: Personalize
         }
@@ -119,6 +119,76 @@ class Battlesnake(object):
                 return True
         return False
 
+    def getDistanceToFood(self, foodPos, head):
+      return abs(foodPos['x'] - head['x']) + abs(foodPos['y'] - head['y'])
+
+    def findNearestFood(self, data):
+      if len(data['board']['food']) == 0:
+        return None
+
+      nearest = data['board']['food'][0]
+      minDistance = self.getDistanceToFood(data['board']['food'][0], data['you']['head'])
+
+      for food in data['board']['food']:
+        curDistance = self.getDistanceToFood(food, data['you']['head'])
+        if minDistance > curDistance:
+          nearest = food
+          minDistance = curDistance
+      return nearest
+
+    #TODO: decide on strategy for when to eat
+    # when health is less than a certain amount?
+    # maybe always so we can try to starve the other snakes?
+    def shouldEat(self, data):
+      print(f"health: {data['you']['health']}")
+      if data['you']['health'] < 40:
+        return True
+      return False
+
+    def canMoveInDirection(self, data, direction):
+      will_hit_another_snake = self.willHitAnotherSnake(
+          data, direction)
+      will_go_out_of_bounds = self.willGoOutOfBounds(data,    direction)
+      if not will_hit_another_snake and not will_go_out_of_bounds:
+        return True
+      return False
+
+    def getDirectionToGoToEat(self, data):
+      nearestFood = self.findNearestFood(data)
+      if nearestFood is not None:
+        print(f"there is food at: {nearestFood}")
+        shouldGoUp = False
+        shouldGoRight = False
+        shouldGoLeft = False
+        shouldGoDown = False
+        
+        if nearestFood['x'] > data['you']['head']['x']:
+          # need to move right
+          shouldGoRight = True
+          print("1")
+        elif nearestFood['x'] < data['you']['head']['x']:
+          # need to move left
+          shouldGoLeft = True
+          print("2")
+        if nearestFood['y'] > data['you']['head']['y']:
+          # need to move up
+          shouldGoUp = True
+          print("3")
+        elif nearestFood['y'] < data['you']['head']['y']:
+          # need to move down
+          shouldGoDown = True
+          print("4")
+        
+        if shouldGoRight and self.canMoveInDirection(data, "right"):
+          return "right"
+        elif shouldGoLeft and self.canMoveInDirection(data, "left"):
+          return "left"
+        elif shouldGoUp and self.canMoveInDirection(data, "up"):
+          return "up"
+        elif shouldGoDown and self.canMoveInDirection(data, "down"):
+          return "down"
+        return None
+
     @cherrypy.expose
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
@@ -131,22 +201,24 @@ class Battlesnake(object):
         # Choose a random direction to move in
         possible_moves = ["up", "down", "left", "right"]
 
-        # print("head:")
-        # print(data['you']['head'])
-        # print(data)
+        print(data)
 
-        move = random.choice(possible_moves)
-        print("Random choice: ", move)
-        for possible_move in possible_moves:
-            # print(possible_move)
-            will_hit_another_snake = self.willHitAnotherSnake(
-                data, possible_move)
-            will_go_out_of_bounds = self.willGoOutOfBounds(data, possible_move)
-            if not will_hit_another_snake and not will_go_out_of_bounds:
-                move = possible_move
-                break
+        move = None
 
-        # move = random.choice(possible_moves)
+        if self.shouldEat(data):
+          print("GO EAT")
+          move = self.getDirectionToGoToEat(data)
+
+        print(f"current move: {move}")
+        
+        if move is None:
+          move = random.choice(possible_moves)
+          print("Random choice: ", move)
+          for possible_move in possible_moves:
+            # takes the first move it finds which won't go out of bounds or hit a snake
+            if self.canMoveInDirection(data, possible_move):
+              move = possible_move
+              break
 
         print(f"MOVE: {move}")
         return {"move": move}
