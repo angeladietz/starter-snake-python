@@ -75,18 +75,18 @@ class Battlesnake(object):
 
     def willHitAnotherSnake(self, data, direction):
         head = data['you']['head']
-        your_health = data['you']['health']
+        your_length = data['you']['length']
         for snake in data['board']['snakes']:
             opponent_body = snake['body']
             opponent_head = snake['body'][0]
-            opponent_health = snake['health']
+            opponent_length = snake['length']
             if direction == "up" and {
                     'x': head['x'],
                     'y': head['y'] + 1
             } in opponent_body:
                 if head['x'] == opponent_head[
                         'x'] and head['y'] + 1 == opponent_head[
-                            'y'] and your_health > opponent_health:
+                            'y'] and your_length > opponent_length:
                     #there's a h2h collision and an opportunity to eliminate opponent
                     return False
                 return True
@@ -96,7 +96,7 @@ class Battlesnake(object):
             } in opponent_body:
                 if head['x'] == opponent_head[
                         'x'] and head['y'] - 1 == opponent_head[
-                            'y'] and your_health > opponent_health:
+                            'y'] and your_length > opponent_length:
                     return False
                 return True
             elif direction == "right" and {
@@ -105,7 +105,7 @@ class Battlesnake(object):
             } in opponent_body:
                 if head['x'] + 1 == opponent_head['x'] and head[
                         'y'] == opponent_head[
-                            'y'] and your_health > opponent_health:
+                            'y'] and your_length > opponent_length:
                     return False
                 return True
             elif direction == "left" and {
@@ -114,7 +114,7 @@ class Battlesnake(object):
             } in opponent_body:
                 if head['x'] - 1 == opponent_head['x'] and head[
                         'y'] == opponent_head[
-                            'y'] and your_health > opponent_health:
+                            'y'] and your_length > opponent_length:
                     return False
                 return True
         return False
