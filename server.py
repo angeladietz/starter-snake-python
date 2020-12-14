@@ -73,50 +73,62 @@ class Battlesnake(object):
 
         return False
 
+    def isHeadToHeadPossible(self, your_head_next_pos, opponent_head):
+        # check if opponent is 1 away from your_head_next_pos
+        ## VERIFY THE OTHER SNAKE IS NOT YOU
+        print(f"checking head to head with {your_head_next_pos} and {opponent_head}")
+        if opponent_head['x'] == your_head_next_pos['x'] and abs(opponent_head['y'] - your_head_next_pos['y']) == 1:
+          return True
+        elif opponent_head['y'] == your_head_next_pos['y'] and abs(opponent_head['x'] - your_head_next_pos['x']) == 1:
+          return True
+        return False
+
     def willHitAnotherSnake(self, data, direction):
         head = data['you']['head']
         your_length = data['you']['length']
         for snake in data['board']['snakes']:
+            # if snake['id'] != data['you']['id']:
             opponent_body = snake['body']
             opponent_head = snake['body'][0]
             opponent_length = snake['length']
-            if direction == "up" and {
-                    'x': head['x'],
-                    'y': head['y'] + 1
-            } in opponent_body:
-                if head['x'] == opponent_head[
-                        'x'] and head['y'] + 1 == opponent_head[
-                            'y'] and your_length > opponent_length:
+            print(f"head: {head}")
+            print(f"opponent {opponent_body}")
+            if direction == "up":
+                if {'x': head['x'], 'y': head['y'] + 1} in opponent_body:
+                    # TODO: CHECK IF IT IS THE END OF THE SNAKE
+                    print("helloooooo")
+                    return True
+                elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible({'x': head['x'],
+                    'y': head['y'] + 1}, opponent_head) and your_length < opponent_length:
                     #there's a h2h collision and an opportunity to eliminate opponent
-                    return False
-                return True
-            elif direction == "down" and {
+                    return True
+            elif direction == "down":
+                if {
                     'x': head['x'],
                     'y': head['y'] - 1
-            } in opponent_body:
-                if head['x'] == opponent_head[
-                        'x'] and head['y'] - 1 == opponent_head[
-                            'y'] and your_length > opponent_length:
-                    return False
-                return True
-            elif direction == "right" and {
+                } in opponent_body:
+                    return True
+                elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible({'x': head['x'],
+                    'y': head['y'] - 1}, opponent_head) and your_length < opponent_length:
+                    return True
+            elif direction == "right":
+                if {
                     'x': head['x'] + 1,
                     'y': head['y']
-            } in opponent_body:
-                if head['x'] + 1 == opponent_head['x'] and head[
-                        'y'] == opponent_head[
-                            'y'] and your_length > opponent_length:
-                    return False
-                return True
-            elif direction == "left" and {
+                } in opponent_body:
+                    return True
+                elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible({'x': head['x']+1,
+                    'y': head['y']}, opponent_head) and your_length < opponent_length:
+                    return True
+            elif direction == "left":
+                if {
                     'x': head['x'] - 1,
                     'y': head['y']
-            } in opponent_body:
-                if head['x'] - 1 == opponent_head['x'] and head[
-                        'y'] == opponent_head[
-                            'y'] and your_length > opponent_length:
-                    return False
-                return True
+                } in opponent_body:
+                    return True
+                elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible({'x': head['x']-1,
+                    'y': head['y']}, opponent_head) and your_length < opponent_length:
+                    return True
         return False
 
     def getDistanceToFood(self, foodPos, head):
@@ -146,9 +158,13 @@ class Battlesnake(object):
       return False
 
     def canMoveInDirection(self, data, direction):
+      print(f"checking direction {direction} with data:")
+      # print(data)
       will_hit_another_snake = self.willHitAnotherSnake(
           data, direction)
-      will_go_out_of_bounds = self.willGoOutOfBounds(data,    direction)
+      # print(will_hit_another_snake)
+      will_go_out_of_bounds = self.willGoOutOfBounds(data, direction)
+      print(will_go_out_of_bounds)
       if not will_hit_another_snake and not will_go_out_of_bounds:
         return True
       return False
