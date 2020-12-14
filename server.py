@@ -75,8 +75,6 @@ class Battlesnake(object):
 
     def isHeadToHeadPossible(self, your_head_next_pos, opponent_head):
         # check if opponent is 1 away from your_head_next_pos
-        ## VERIFY THE OTHER SNAKE IS NOT YOU
-        print(f"checking head to head with {your_head_next_pos} and {opponent_head}")
         if opponent_head['x'] == your_head_next_pos['x'] and abs(opponent_head['y'] - your_head_next_pos['y']) == 1:
           return True
         elif opponent_head['y'] == your_head_next_pos['y'] and abs(opponent_head['x'] - your_head_next_pos['x']) == 1:
@@ -95,28 +93,31 @@ class Battlesnake(object):
             print(f"opponent {opponent_body}")
             if direction == "up":
                 new_pos = {'x': head['x'], 'y': head['y'] + 1}
-                if new_pos in opponent_body and new_pos != opponent_body[len(opponent_body)-1]:
-                    # TODO: CHECK IF IT IS THE END OF THE SNAKE
-                    return True
+                if new_pos in opponent_body:
+                    if data['turn'] <2 or new_pos != opponent_body[len(opponent_body)-1]:
+                        return True
                 elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible(new_pos, opponent_head) and your_length < opponent_length:
                     #there's a h2h collision and an opportunity to eliminate opponent
                     return True
             elif direction == "down":
                 new_pos = {'x': head['x'],'y': head['y'] - 1}
-                if new_pos in opponent_body and new_pos != opponent_body[len(opponent_body)-1]:
-                    return True
+                if new_pos in opponent_body:
+                    if data['turn'] <2 or new_pos != opponent_body[len(opponent_body)-1]:
+                        return True
                 elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible(new_pos, opponent_head) and your_length < opponent_length:
                     return True
             elif direction == "right":
                 new_pos = {'x': head['x'] + 1,'y': head['y']}
-                if new_pos in opponent_body and new_pos != opponent_body[len(opponent_body)-1]:
-                    return True
+                if new_pos in opponent_body:
+                    if data['turn'] <2 or new_pos != opponent_body[len(opponent_body)-1]:
+                        return True
                 elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible(new_pos, opponent_head) and your_length < opponent_length:
                     return True
             elif direction == "left":
                 new_pos = {'x': head['x'] - 1,'y': head['y']}
-                if new_pos in opponent_body and new_pos != opponent_body[len(opponent_body)-1]:
-                    return True
+                if new_pos in opponent_body:
+                    if data['turn'] <2 or new_pos != opponent_body[len(opponent_body)-1]:
+                        return True
                 elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible(new_pos, opponent_head) and your_length < opponent_length:
                     return True
         return False
@@ -149,12 +150,9 @@ class Battlesnake(object):
 
     def canMoveInDirection(self, data, direction):
       print(f"checking direction {direction} with data:")
-      # print(data)
       will_hit_another_snake = self.willHitAnotherSnake(
           data, direction)
-      # print(will_hit_another_snake)
       will_go_out_of_bounds = self.willGoOutOfBounds(data, direction)
-      print(will_go_out_of_bounds)
       if not will_hit_another_snake and not will_go_out_of_bounds:
         return True
       return False
@@ -210,6 +208,8 @@ class Battlesnake(object):
         print(data)
 
         move = None
+
+        # TODO: if the only options are run into something or risk a lost head 2 head collision, risk collision
 
         if self.shouldEat(data):
           print("GO EAT")
