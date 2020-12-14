@@ -94,40 +94,30 @@ class Battlesnake(object):
             print(f"head: {head}")
             print(f"opponent {opponent_body}")
             if direction == "up":
-                if {'x': head['x'], 'y': head['y'] + 1} in opponent_body:
+                new_pos = {'x': head['x'], 'y': head['y'] + 1}
+                if new_pos in opponent_body and new_pos != opponent_body[len(opponent_body)-1]:
                     # TODO: CHECK IF IT IS THE END OF THE SNAKE
-                    print("helloooooo")
                     return True
-                elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible({'x': head['x'],
-                    'y': head['y'] + 1}, opponent_head) and your_length < opponent_length:
+                elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible(new_pos, opponent_head) and your_length < opponent_length:
                     #there's a h2h collision and an opportunity to eliminate opponent
                     return True
             elif direction == "down":
-                if {
-                    'x': head['x'],
-                    'y': head['y'] - 1
-                } in opponent_body:
+                new_pos = {'x': head['x'],'y': head['y'] - 1}
+                if new_pos in opponent_body and new_pos != opponent_body[len(opponent_body)-1]:
                     return True
-                elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible({'x': head['x'],
-                    'y': head['y'] - 1}, opponent_head) and your_length < opponent_length:
+                elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible(new_pos, opponent_head) and your_length < opponent_length:
                     return True
             elif direction == "right":
-                if {
-                    'x': head['x'] + 1,
-                    'y': head['y']
-                } in opponent_body:
+                new_pos = {'x': head['x'] + 1,'y': head['y']}
+                if new_pos in opponent_body and new_pos != opponent_body[len(opponent_body)-1]:
                     return True
-                elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible({'x': head['x']+1,
-                    'y': head['y']}, opponent_head) and your_length < opponent_length:
+                elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible(new_pos, opponent_head) and your_length < opponent_length:
                     return True
             elif direction == "left":
-                if {
-                    'x': head['x'] - 1,
-                    'y': head['y']
-                } in opponent_body:
+                new_pos = {'x': head['x'] - 1,'y': head['y']}
+                if new_pos in opponent_body and new_pos != opponent_body[len(opponent_body)-1]:
                     return True
-                elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible({'x': head['x']-1,
-                    'y': head['y']}, opponent_head) and your_length < opponent_length:
+                elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible(new_pos, opponent_head) and your_length < opponent_length:
                     return True
         return False
 
