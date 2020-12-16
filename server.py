@@ -18,7 +18,7 @@ class Battlesnake(object):
         return {
             "apiversion": "1",
             "author": "",  # TODO: Your Battlesnake Username
-            "color": "#0b03fc",  # TODO: Personalize
+            "color": "#B765CD",  # TODO: Personalize
             "head": "default",  # TODO: Personalize
             "tail": "default",  # TODO: Personalize
         }
@@ -81,6 +81,30 @@ class Battlesnake(object):
           return True
         return False
 
+    def checkForHeadToHead(self, data, direction):
+        head = data['you']['head']
+        your_length = data['you']['length']
+        for snake in data['board']['snakes']:
+            if snake['id'] == data['you']['id']:
+              continue
+            opponent_body = snake['body']
+            opponent_head = snake['body'][0]
+            opponent_length = snake['length']
+            if direction == "up":
+                new_pos = {'x': head['x'], 'y': head['y'] + 1}
+            elif direction == "down":
+                new_pos = {'x': head['x'],'y': head['y'] - 1}
+            elif direction == "right":
+                new_pos = {'x': head['x'] + 1,'y': head['y']}
+            elif direction == "left":
+                new_pos = {'x': head['x'] - 1,'y': head['y']}
+            if self.isHeadToHeadPossible(new_pos, opponent_head):
+                if your_length <= opponent_length:
+                    return "defeat"
+                else:
+                    return "eliminate"
+        return "not_possible"
+
     def willHitAnotherSnake(self, data, direction):
         head = data['you']['head']
         your_length = data['you']['length']
@@ -96,30 +120,30 @@ class Battlesnake(object):
                 if new_pos in opponent_body:
                     if data['turn'] <2 or new_pos != opponent_body[len(opponent_body)-1]:
                         return True
-                elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible(new_pos, opponent_head) and your_length < opponent_length:
-                    #there's a h2h collision and an opportunity to eliminate opponent
-                    return True
+                # elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible(new_pos, opponent_head) and your_length <= opponent_length:
+                #     #there's a h2h collision and an opportunity to eliminate opponent
+                #     return True
             elif direction == "down":
                 new_pos = {'x': head['x'],'y': head['y'] - 1}
                 if new_pos in opponent_body:
                     if data['turn'] <2 or new_pos != opponent_body[len(opponent_body)-1]:
                         return True
-                elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible(new_pos, opponent_head) and your_length < opponent_length:
-                    return True
+                # elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible(new_pos, opponent_head) and your_length <= opponent_length:
+                #     return True
             elif direction == "right":
                 new_pos = {'x': head['x'] + 1,'y': head['y']}
                 if new_pos in opponent_body:
                     if data['turn'] <2 or new_pos != opponent_body[len(opponent_body)-1]:
                         return True
-                elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible(new_pos, opponent_head) and your_length < opponent_length:
-                    return True
+                # elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible(new_pos, opponent_head) and your_length <= opponent_length:
+                #     return True
             elif direction == "left":
                 new_pos = {'x': head['x'] - 1,'y': head['y']}
                 if new_pos in opponent_body:
                     if data['turn'] <2 or new_pos != opponent_body[len(opponent_body)-1]:
                         return True
-                elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible(new_pos, opponent_head) and your_length < opponent_length:
-                    return True
+                # elif snake['id'] != data['you']['id'] and self.isHeadToHeadPossible(new_pos, opponent_head) and your_length <= opponent_length:
+                #     return True
         return False
 
     def getDistanceToFood(self, foodPos, head):
@@ -153,14 +177,19 @@ class Battlesnake(object):
       will_hit_another_snake = self.willHitAnotherSnake(
           data, direction)
       will_go_out_of_bounds = self.willGoOutOfBounds(data, direction)
+      will_lose_head2head = self.checkForLostHeadToHead(data, direction)
       if not will_hit_another_snake and not will_go_out_of_bounds:
         return True
       return False
 
-    def getDirectionToGoToEat(self, data):
+    def getDirectionsToGoToEat(self, data):
       nearestFood = self.findNearestFood(data)
       if nearestFood is not None:
         print(f"there is food at: {nearestFood}")
+
+        direction_to_eat_data = {
+          "up": False, "down": False, "left": False, "right": False
+        }
         shouldGoUp = False
         shouldGoRight = False
         shouldGoLeft = False
@@ -169,29 +198,82 @@ class Battlesnake(object):
         if nearestFood['x'] > data['you']['head']['x']:
           # need to move right
           shouldGoRight = True
+          direction_to_eat_data["right"] = True
           print("1")
         elif nearestFood['x'] < data['you']['head']['x']:
           # need to move left
           shouldGoLeft = True
+          direction_to_eat_data["left"] = True
           print("2")
         if nearestFood['y'] > data['you']['head']['y']:
           # need to move up
           shouldGoUp = True
+          direction_to_eat_data["up"] = True
           print("3")
         elif nearestFood['y'] < data['you']['head']['y']:
           # need to move down
           shouldGoDown = True
+          direction_to_eat_data["down"] = True
           print("4")
         
-        if shouldGoRight and self.canMoveInDirection(data, "right"):
-          return "right"
-        elif shouldGoLeft and self.canMoveInDirection(data, "left"):
-          return "left"
-        elif shouldGoUp and self.canMoveInDirection(data, "up"):
-          return "up"
-        elif shouldGoDown and self.canMoveInDirection(data, "down"):
-          return "down"
-        return None
+        return direction_to_eat_data
+        
+        # if shouldGoRight and self.canMoveInDirection(data, "right"):
+        #   return "right"
+        # elif shouldGoLeft and self.canMoveInDirection(data, "left"):
+        #   return "left"
+        # elif shouldGoUp and self.canMoveInDirection(data, "up"):
+        #   return "up"
+        # elif shouldGoDown and self.canMoveInDirection(data, "down"):
+        #   return "down"
+        # return None
+
+    def getBestMove(self, moves_data, data, possible_moves):
+        okay_moves = []
+        # get moves that won't go out of bounds or hit another snake
+        for move in moves_data:
+            if not moves_data[move]['will_go_out_of_bounds'] and not moves_data[move]['will_hit_another_snake']:
+                okay_moves.append(move)
+
+        if len(okay_moves) == 0:
+            print("************* making a random move ****************")
+            random.choice(possible_moves)
+        
+        best_moves = []
+
+        # if there is a move that will eliminate another snake, do that
+        for move in okay_moves:
+            if moves_data[move]['head2head_result'] == "eliminate":
+                return move
+            elif moves_data[move]['head2head_result'] == "not_possible":
+                best_moves.append(move)
+
+        #determine if we should eat
+        if self.shouldEat(data):
+            print("GO EAT")
+            direction_to_eat_data = self.getDirectionsToGoToEat(data)
+            if direction_to_eat_data["right"] is True and "right" in best_moves:
+                return "right"
+            if direction_to_eat_data["left"] is True and "left" in best_moves:
+                return "left"
+            if direction_to_eat_data["up"] is True and "up" in best_moves:
+                return "up"
+            if direction_to_eat_data["down"] is True and "down" in best_moves:
+                return "down"
+
+        # now we know that we can't eliminate another player
+        # get first move in order that won't risk elimination
+        if len(best_moves) > 0:
+            for move in possible_moves:
+                if move in best_moves:
+                    return move
+
+        for move in possible_moves:
+            if move in okay_moves:
+                return move
+        
+        return okay_moves[0]
+
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
@@ -205,26 +287,31 @@ class Battlesnake(object):
         # Choose a random direction to move in
         possible_moves = ["up", "down", "left", "right"]
 
+        print("data is:****************")
         print(data)
+        print("****************")
 
-        move = None
+        moves_data = {
+          "up": {}, "down": {}, "left": {}, "right": {}
+        }
+        for possible_move in possible_moves:
+            will_go_out_of_bounds = self.willGoOutOfBounds(data, possible_move)
+            if not will_go_out_of_bounds:
+                will_hit_another_snake = self.willHitAnotherSnake(data, possible_move)
+                head2head_result = self.checkForHeadToHead(data, possible_move)
+                moves_data[possible_move] = {
+                  'will_hit_another_snake': will_hit_another_snake,
+                  'will_go_out_of_bounds': will_go_out_of_bounds,
+                  'head2head_result' : head2head_result
+                }
+            else:
+              moves_data[possible_move] = {
+                'will_hit_another_snake': True,
+                'will_go_out_of_bounds': will_go_out_of_bounds,
+                'head2head_result' : "not_possible"
+              }
 
-        # TODO: if the only options are run into something or risk a lost head 2 head collision, risk collision
-
-        if self.shouldEat(data):
-          print("GO EAT")
-          move = self.getDirectionToGoToEat(data)
-
-        print(f"current move: {move}")
-        
-        if move is None:
-          move = random.choice(possible_moves)
-          print("Random choice: ", move)
-          for possible_move in possible_moves:
-            # takes the first move it finds which won't go out of bounds or hit a snake
-            if self.canMoveInDirection(data, possible_move):
-              move = possible_move
-              break
+        move = self.getBestMove(moves_data, data, possible_moves)
 
         print(f"MOVE: {move}")
         return {"move": move}
